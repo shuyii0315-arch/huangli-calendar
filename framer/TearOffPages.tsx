@@ -72,8 +72,9 @@ export default function TearOffPages(props) {
     const [live, setLive] = React.useState(false)
 
     React.useEffect(() => {
-        if (isStatic || !root.current) return
-        const stop = engine(root.current, cfg)
+        if (!root.current) return
+        // on the Framer canvas: build the same scene, draw one still frame, no physics or listeners
+        const stop = engine(root.current, cfg, isStatic)
         setLive(true)
         return () => {
             stop()
@@ -127,7 +128,7 @@ addPropertyControls(TearOffPages, {
 /* ===================================================================== */
 /* The engine: plain DOM + one rAF loop, scoped to this instance's box.   */
 /* ===================================================================== */
-function engine(host, cfgRef) {
+function engine(host, cfgRef, still = false) {
     const doc = host.ownerDocument
     const win = doc.defaultView
     const cfg = () => cfgRef.current
@@ -580,10 +581,13 @@ function engine(host, cfgRef) {
     }
     const onUp = (e) => { if (grab) dragEnd(e); if (barDrag) barDrag = null }
     const onCancel = () => { if (grab) dragEnd({}) }
-    win.addEventListener("pointermove", onMove)
-    win.addEventListener("pointerup", onUp)
-    win.addEventListener("pointercancel", onCancel)
-    win.addEventListener("blur", onCancel)
+    if (still) layer.style.pointerEvents = "none"
+    else {
+        win.addEventListener("pointermove", onMove)
+        win.addEventListener("pointerup", onUp)
+        win.addEventListener("pointercancel", onCancel)
+        win.addEventListener("blur", onCancel)
+    }
 
     /* ---------- tiny rAF tween ---------- */
     const tweens = new Set()
@@ -657,9 +661,15 @@ function engine(host, cfgRef) {
             f.el.style.opacity = Math.max(0, 1 - Math.max(0, f.t - 0.5) * 1.4)
             if (f.y > H + 200 || f.t > 1.4) { f.el.remove(); flyers.splice(i, 1) }
         }
-        raf = win.requestAnimationFrame(frame)
+        if (!still) raf = win.requestAnimationFrame(frame)
     }
-    raf = win.requestAnimationFrame(frame)
+    if (still) {
+        sw.a = 0; frame(performance.now())
+        ro.disconnect()
+        const ro2 = new win.ResizeObserver(() => { layout(); frame(performance.now()) })
+        ro2.observe(host)
+        tweens.add(() => ro2.disconnect())
+    } else raf = win.requestAnimationFrame(frame)
 
     return () => {
         alive = false
