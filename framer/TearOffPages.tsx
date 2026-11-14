@@ -223,8 +223,8 @@ function engine(host, cfgRef, still = false) {
     const sw = { a: 0.012, v: 0 }
     let swX = 0, swY = 0, stackL = 0, stackT = 0
     function layout() {
-        const r = host.getBoundingClientRect()
-        W = r.width; H = r.height
+        // layout size, not screen size: the Framer canvas zooms with a transform
+        W = host.offsetWidth; H = host.offsetHeight
         const R = cfg().R
         pw = Math.max(60, Math.min(W * (W / H < 0.9 ? 0.62 : 0.44), (H * 0.84) / (R + 0.11)))
         ph = pw * R
@@ -292,7 +292,10 @@ function engine(host, cfgRef, still = false) {
 
     /* ---------- local coordinates ---------- */
     let hostRect = host.getBoundingClientRect()
-    const local = (e) => ({ x: e.clientX - hostRect.left, y: e.clientY - hostRect.top })
+    const local = (e) => {
+        const k = hostRect.width / Math.max(1, host.offsetWidth) || 1
+        return { x: (e.clientX - hostRect.left) / k, y: (e.clientY - hostRect.top) / k }
+    }
     const stackRect = () => ({ left: stackL, top: stackT, right: stackL + pw, bottom: stackT + ph })
     const barRect = () => ({ left: W / 2 - barW / 2 + swX, top: wireL - swY, right: W / 2 + barW / 2 + swX, bottom: wireL - swY + barH })
 
