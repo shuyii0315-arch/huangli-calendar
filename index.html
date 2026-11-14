@@ -32,7 +32,15 @@ body{min-height:100%;margin:0 auto;max-width:1040px;padding:0 28px 140px;backgro
 .acts button{height:32px;padding:0 13px;box-shadow:inset 0 0 0 .5px rgba(26,26,26,.14)}
 .acts .gh{height:32px;display:inline-flex;align-items:center;padding:0 13px;border-radius:999px;font:500 12.5px Geist,system-ui,sans-serif;color:#3A3936;text-decoration:none;box-shadow:inset 0 0 0 .5px rgba(26,26,26,.14)}
 .acts .gh:hover{background:rgba(26,26,26,.05)}
+.acts .fr{height:32px;display:inline-flex;align-items:center;gap:7px;padding:0 13px 0 6px;border-radius:999px;font:500 12.5px Geist,system-ui,sans-serif;color:#3A3936;text-decoration:none;box-shadow:inset 0 0 0 .5px rgba(26,26,26,.14);transition:background .2s}
+.acts .fr:hover{background:rgba(26,26,26,.05)}
+.acts .fr i{width:20px;height:20px;border-radius:7px;background:#111;display:grid;place-items:center;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.acts .fr:hover i{transform:rotate(-10deg) scale(1.08)}
+.acts .fr svg{width:10px;height:10px;fill:#fff;stroke:none}
+
 .desc{max-width:600px;font-size:14px;line-height:1.6;color:#55534F;margin:12px 0 14px}
+.desc+.desc{margin-top:-6px}
+.desc a{color:#1A1A1A;text-decoration:underline;text-decoration-thickness:.5px;text-underline-offset:3px}
 .uses{display:flex;align-items:center;gap:6px;font-size:12px;color:#8E8C87;flex-wrap:wrap}
 .uses i{font-style:normal;padding:3px 9px;border-radius:999px;background:#F7F7F7;color:#55534F}
 .spec{margin-top:36px;padding-top:24px;border-top:.5px solid rgba(26,26,26,.1)}
@@ -52,6 +60,9 @@ body.m-full .pg-top,body.m-full .info,body.m-full .dctl{display:none}
 body.m-full .demo{position:fixed;inset:0;height:auto;min-height:0;border-radius:0;box-shadow:none}
 body.m-full #close{display:inline-flex}
 @media (max-width:720px){
+  .ttl{flex-direction:column;align-items:flex-start;gap:12px}
+  .acts{flex-wrap:wrap}
+  .acts .fr{white-space:nowrap}
   body{padding:0 16px 96px}
   .pg-top{height:52px}
   .demo{height:min(700px,calc(100svh - 120px));min-height:560px;border-radius:18px}
@@ -81,9 +92,11 @@ body.m-full #close{display:inline-flex}
     <div class="acts">
       <button id="share" title="Copy link"><svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg><span>Share</span></button>
       <a class="gh" href="https://github.com/shuyii0315-arch/huangli-calendar" target="_blank">GitHub</a>
+      <a class="fr" href="https://www.framer.com/marketplace/components/poster-rail/" target="_blank" title="Use it in Framer: Poster Rail"><i><svg viewBox="0 0 24 24"><path d="M4 0h16v8h-8zM4 8h8l8 8H4zM4 16h8v8z"/></svg></i>Framer component</a>
     </div>
   </div>
   <p class="desc">A Chinese tear-off almanac that hangs on a metal bar. Every page is worked out for its real date: the lunar day, the solar term, what the day is good and bad for, tonight's moon. Pull a page off by hand, write on it with the pen on the chain, and keep a page as an image.</p>
+  <p class="desc">Also released as <a href="https://www.framer.com/marketplace/components/poster-rail/" target="_blank">Poster Rail</a>, a free Framer component: anyone can hang their own images on the rail and use it on their own site.</p>
   <div class="uses"><span>Uses</span><i>lunar calendar</i><i>drag physics</i><i>SVG</i><i>Web Audio</i><i>Web Animations</i></div>
   <div class="spec">
     <div class="tabs" id="tabs">
