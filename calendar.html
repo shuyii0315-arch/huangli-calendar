@@ -9461,7 +9461,7 @@ function bindTop(){
     if(pen.held){ startStroke(e, el); return; }
     const r=el.getBoundingClientRect();
     grab={el, r, g:{x:e.clientX-r.left, y:e.clientY-r.top}, x0:e.clientX, y0:e.clientY, moved:false, side:0, hist:[[e.clientX,e.clientY,performance.now()]]};
-    grab.curl = grab.g.y > r.height*.62; grab.cside = grab.g.x > r.width/2 ? 'r' : 'l';
+    grab.curl = grab.g.y > r.height*.62; grab.cside = grab.g.x > r.width/2 ? 'r' : 'l'; grab.cs0 = peek.el===el ? peek.s : 0; if(grab.cs0){ grab.curl=true; grab.cside=peek.side; } peek.el=null; peek.tgt=0; peek.s=0;
     el.setPointerCapture(e.pointerId); el.style.cursor='grabbing';
   };
   el.onpointermove=e=>{ if(grab && grab.el===el) dragMove(e); };
@@ -9473,6 +9473,33 @@ addEventListener('pointercancel',e=>{ if(grab) dragEnd(e); });
 addEventListener('blur',()=>{ if(grab) dragEnd({}); });
 document.addEventListener('pointerleave',()=>{ if(grab && grab.fly) dragEnd({}); });
 addEventListener('pointermove',e=>{ if(grab && grab.fly && e.buttons===0) dragEnd(e); });
+/* 鼠标靠近底部两个角：角先自己翘一点，暗示「从这里可以掀/撕」 */
+const peek={el:null, side:'r', s:0, tgt:0, raf:0};
+function peekStep(){
+  peek.raf=0; const el=peek.el; if(!el || grab) { peek.s=0; return; }
+  peek.s += (peek.tgt-peek.s)*.22;
+  if(Math.abs(peek.tgt-peek.s)<.3) peek.s=peek.tgt;
+  setCurl(el, peek.s, peek.side);
+  if(peek.s!==peek.tgt) peek.raf=requestAnimationFrame(peekStep);
+  else if(peek.s===0) peek.el=null;
+}
+addEventListener('pointermove',e=>{
+  if(grab || busy || e.buttons) return;
+  const el=topPage(); if(!el) return;
+  let tgt=0, side=peek.side;
+  if(!pen.held){
+    const r=el.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top, Z=Math.min(96, r.width*.2);
+    if(y>r.height-Z && y<r.height+8 && x>-8 && x<r.width+8){
+      const dx=x<r.width/2 ? x : r.width-x, d=Math.hypot(Math.max(0,dx), Math.max(0,r.height-y));
+      if(d<Z){ tgt=10+22*(1-d/Z); side=x<r.width/2?'l':'r'; }
+    }
+  }
+  if(peek.el && peek.el!==el){ setCurl(peek.el,0); peek.s=0; }
+  if(tgt && peek.s>0 && side!==peek.side){ setCurl(el,0); peek.s=0; }
+  peek.el = (tgt||peek.s) ? el : null; peek.tgt=tgt; peek.side=side;
+  el.style.cursor = tgt ? 'grab' : '';
+  if(peek.el && !peek.raf) peek.raf=requestAnimationFrame(peekStep);
+});
 function velocity(h){
   const n=h.length; if(n<2) return [0,0];
   const a=h[Math.max(0,n-5)], b=h[n-1], dt=Math.max(8,b[2]-a[2]);
@@ -9499,7 +9526,7 @@ function dragMove(e){
   sw.y=ty*.7; sw.yv=0; sw.v+=-(th-(G2.th||0))*.0008; G2.th=th;
   // 从下半部分捏：先把那个角翘起来
   if(G2.curl){
-    const d=Math.hypot(dx,dy), cs=Math.min(r.width*.42, d*.8);
+    const d=Math.hypot(dx,dy), cs=Math.min(r.width*.42, Math.max(G2.cs0||0, d*.8));
     setCurl(el, cs, G2.cside);
     el.style.transform=`translateY(${ty.toFixed(1)}px) rotate(${(th*.3).toFixed(2)}deg)`;
     if(d>r.width*.26){ setCurl(el,0); tearFromHand(e, th*.3, pv); }
@@ -9522,7 +9549,7 @@ function dragEnd(e){
   const G2=grab; grab=null; G2.el.style.cursor='';
   if(G2.fly){ G2.el.onpointermove=G2.el.onpointerup=G2.el.onpointercancel=null; }
   if(G2.fly){ const [vx,vy]=velocity(G2.hist); const f=G2.fly; f.held=false; f.vx=Math.max(-1400,Math.min(1400,vx)); f.vy=Math.max(-600,Math.min(1400,vy)); f.w=f.rv/60; f.t=0; return; }
-  if(!G2.moved){ nudge(G2.el); return; }
+  if(!G2.moved){ if(G2.cs0){ peek.el=G2.el; peek.s=peek.tgt=G2.cs0; peek.side=G2.cside; } nudge(G2.el); return; }
   const el=G2.el; // 没撕断：弹回去
   if(G2.curl){ const cs0=parseFloat((el.style.clipPath.match(/- ([\d.]+)px/)||[])[1]||0), t0=performance.now();
     const un=t=>{const p=Math.min(1,(t-t0)/260); setCurl(el, cs0*(1-easeOut(p)), G2.cside); if(p<1) requestAnimationFrame(un);}; requestAnimationFrame(un); }
