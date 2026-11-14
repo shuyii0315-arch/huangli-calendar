@@ -160,10 +160,16 @@ body.chainheld #pencil svg{filter:drop-shadow(12px 18px 9px rgba(30,35,40,.2))}
   background:#f7f7f7;
   box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.06),0 6px 16px rgba(30,35,40,.10),0 1px 2px rgba(30,35,40,.06)}
 #main{height:64px;padding:0 10px 0 0;gap:4px}
-#util{height:64px;padding:0 8px;gap:2px}
-#util .pill.icon{width:44px;height:48px;border-radius:10px;background:none;color:#6a6b6f}
-#util .pill.icon:hover{background:rgba(0,0,0,.06);color:#1f2023}
-#util .pill.icon svg{width:20px;height:20px}
+#util{position:fixed;top:16px;right:16px;z-index:40;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.8);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.05),inset 0 0 0 .5px rgba(26,26,26,.08)}
+#util .pill.icon{width:34px;height:30px;border-radius:999px;background:none;color:#3A3936}
+#util .pill.icon:hover{background:rgba(26,26,26,.06)}
+#util .pill.icon.on{background:rgba(26,26,26,.08);box-shadow:none}
+#util .pill.icon.on::after{display:none}
+#util .pill.icon svg{width:16px;height:16px}
+#util .pop{bottom:auto;top:46px;right:0;left:auto;transform-origin:calc(100% - var(--ax,50px)) 0;transform:translateY(-10px) scale(.6) rotate(4deg)}
+#util .pop.open{transform:none}
+#util .paper::before{bottom:auto;top:-6px;left:auto;right:var(--ax,50px);margin-left:0;margin-right:-6px;box-shadow:-3px -3px 4px rgba(0,0,0,.04)}
 #main .vsep{height:40px;margin:0 10px 0 6px;background:rgba(0,0,0,.12)}
 #main .pill.icon{width:38px;height:38px;border-radius:10px;background:none;color:#6a6b6f}
 #main .pill.icon:hover{background:rgba(0,0,0,.06);color:#1f2023}
@@ -281,6 +287,11 @@ body.holding .stack .page{cursor:none}
   <div id="pencil" aria-label="笔"></div>
   <div id="handpen" aria-hidden="true"></div>
 </div>
+  <div id="util">
+    <div class="pop paper" id="calpop"></div>
+    <button class="pill icon" id="dateBtn" title="Go to date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="dTxt" hidden></span></button>
+    <button class="pill icon" id="dl" title="Save this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16v2.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></button>
+  </div>
 <div id="dock">
   <div id="sub" class="bar2">
     <button class="pill icon" id="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
@@ -305,10 +316,6 @@ body.holding .stack .page{cursor:none}
       <button class="slot ers" data-tool="eraser" title="Eraser"><span class="pen-mini er"></span></button>
     </div>
   </div>
-  <div class="bar2" id="util">
-    <button class="pill icon" id="dateBtn" title="Go to date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="dTxt" hidden></span></button>
-    <button class="pill icon" id="dl" title="Save this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16v2.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></button>
-  </div>
   <input type="hidden" id="pick">
   <div class="pop paper" id="picker">
     <div class="ttl"><span>INK</span><span id="pkName">CUSTOM</span></div>
@@ -316,7 +323,6 @@ body.holding .stack .page{cursor:none}
     <div class="slider" id="slider"><span class="track" id="track"></span><span class="thumb" id="thumb"></span></div>
     <div class="lbl"><span>DARK</span><span>LIGHT</span></div>
   </div>
-  <div class="pop paper" id="calpop"></div>
 </div>
 
 <script>/*! lunar-javascript v1.7.8 */
@@ -9778,9 +9784,10 @@ slider.addEventListener('pointerdown',e=>{
 function openPop(pop, anchorEl){
   const others=[...document.querySelectorAll('.pop.open')].filter(p=>p!==pop); others.forEach(p=>p.classList.remove('open'));
   if(pop.classList.contains('open')){ pop.classList.remove('open'); return false; }
-  const d=document.getElementById('dock').getBoundingClientRect(), a=anchorEl.getBoundingClientRect();
+  const host=pop.parentElement, d=host.getBoundingClientRect(), a=anchorEl.getBoundingClientRect();
   const w=pop.offsetWidth; const left=Math.max(-d.left+12, a.left+a.width/2-d.left-w/2);
-  pop.style.left=left+'px'; pop.style.setProperty('--ox',(a.left+a.width/2-d.left-left)+'px'); pop.style.bottom=(d.bottom-a.top+14)+'px';
+  if(host.id==='util'){ pop.style.setProperty('--ax',(d.right-(a.left+a.width/2))+'px'); }
+  else { pop.style.left=left+'px'; pop.style.setProperty('--ox',(a.left+a.width/2-d.left-left)+'px'); pop.style.bottom=(d.bottom-a.top+14)+'px'; }
   pop.classList.add('open'); sndKnock(); return true;
 }
 function closePops(){ document.querySelectorAll('.pop.open').forEach(p=>p.classList.remove('open')); }
