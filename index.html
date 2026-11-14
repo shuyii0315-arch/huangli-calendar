@@ -34,18 +34,20 @@ body{min-height:100%;margin:0 auto;max-width:1040px;padding:0 28px 140px;backgro
 .acts .gh:hover{background:rgba(26,26,26,.05)}
 .acts .fr{height:32px;display:inline-flex;align-items:center;gap:7px;padding:0 13px 0 6px;border-radius:999px;font:500 12.5px Geist,system-ui,sans-serif;color:#3A3936;text-decoration:none;box-shadow:inset 0 0 0 .5px rgba(26,26,26,.14);transition:background .2s}
 .acts .fr:hover{background:rgba(26,26,26,.05)}
-.acts .fr i{width:20px;height:20px;border-radius:7px;background:#111;display:grid;place-items:center;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
-.acts .fr:hover i{transform:rotate(-10deg) scale(1.08)}
+.acts .fr i{width:20px;height:20px;border-radius:7px;background:#111;display:grid;place-items:center;transition:transform .3s,background .3s,box-shadow .3s}
+.acts .fr:hover i,.acts .fr:focus-visible i{animation:fr-icon 1.25s cubic-bezier(.3,0,.3,1) forwards}
+@keyframes fr-icon{0%{transform:none;background:#111}12%{transform:rotate(-10deg) scale(1.06)}68%{transform:rotate(-10deg) scale(1.06);background:#111;box-shadow:0 0 0 0 rgba(0,153,255,0)}80%{transform:rotate(6deg) scale(1.2);background:#0099FF;box-shadow:0 0 0 3px rgba(0,153,255,.2),0 0 14px rgba(0,153,255,.7)}90%{transform:rotate(-2deg) scale(.96)}100%{transform:none;background:#0099FF;box-shadow:0 0 0 0 rgba(0,153,255,0),0 0 8px rgba(0,153,255,.45)}}
 .acts .fr i svg{width:10px;height:10px;fill:#fff;stroke:none}
 .acts .fr .trace{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .acts .fr .trace rect{fill:none;vector-effect:non-scaling-stroke}
 .acts .fr .trace .ln{stroke:#2AA8FF;stroke-width:.6;stroke-dasharray:1 1;stroke-dashoffset:1;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 1.5px rgba(0,153,255,.75)) drop-shadow(0 0 6px rgba(0,153,255,.35))}
 .acts .fr .trace .hd{stroke:#F2FAFF;stroke-width:1;stroke-linecap:round;stroke-dasharray:.05 1;stroke-dashoffset:.05;opacity:0;filter:drop-shadow(0 0 1.5px #39AEFF) drop-shadow(0 0 4px rgba(0,153,255,.9)) drop-shadow(0 0 10px rgba(0,153,255,.5))}
-.acts .fr:hover .trace .ln,.acts .fr:focus-visible .trace .ln{opacity:1;transition:none;animation:fr-draw .9s cubic-bezier(.6,0,.25,1) forwards}
+.acts .fr:hover .trace .ln,.acts .fr:focus-visible .trace .ln{opacity:1;transition:none;animation:fr-draw .9s cubic-bezier(.6,0,.25,1) forwards,fr-breathe 2.4s ease-in-out .9s infinite alternate}
+@keyframes fr-breathe{from{filter:drop-shadow(0 0 1.5px rgba(0,153,255,.75)) drop-shadow(0 0 6px rgba(0,153,255,.35))}to{filter:drop-shadow(0 0 2px rgba(0,153,255,.9)) drop-shadow(0 0 10px rgba(0,153,255,.55))}}
 .acts .fr:hover .trace .hd,.acts .fr:focus-visible .trace .hd{animation:fr-head .9s cubic-bezier(.6,0,.25,1) forwards}
 @keyframes fr-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @keyframes fr-head{0%{stroke-dashoffset:.05;opacity:0}8%{opacity:1}82%{opacity:1}100%{stroke-dashoffset:-.95;opacity:0}}
-@media (prefers-reduced-motion:reduce){.acts .fr:hover .trace .ln{animation:none;stroke-dashoffset:0}.acts .fr:hover .trace .hd{animation:none}}
+@media (prefers-reduced-motion:reduce){.acts .fr:hover .trace .ln{animation:none;stroke-dashoffset:0}.acts .fr:hover .trace .hd{animation:none}.acts .fr:hover i{animation:none;background:#0099FF}}
 
 .acts .fr{position:relative}
 
