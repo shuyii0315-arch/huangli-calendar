@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Tear-off Pages — a pad of pages hanging from a brushed-aluminium bar on two steel wires.
+// Poster Rail — a digital poster rail: a pad of pages hanging from a brushed-aluminium bar on two steel wires.
 // Tear a page off by hand. Throw it away, or set it down on the wall and a magnet holds it.
 // Drop in your own images (and an optional link per page) from the properties panel.
 // by Shuyi Yuan · https://shuyii0315-arch.github.io/huangli-calendar/
@@ -71,7 +71,7 @@ const CSS = `
  * @framerIntrinsicWidth 900
  * @framerIntrinsicHeight 720
  */
-export default function TearOffPages(props) {
+export default function PosterRail(props) {
     const { pages, sample = "Almanac", ratio = "Auto", wall = "#F7F7F7", pin = true, sound = true, style } = props
     const own = (pages || []).filter((p) => p && p.image && p.image.src)
     const list = own.length ? own : SAMPLES[sample] || ALMANAC
@@ -118,7 +118,7 @@ function StaticView({ list, R }) {
     )
 }
 
-addPropertyControls(TearOffPages, {
+addPropertyControls(PosterRail, {
     pages: {
         type: ControlType.Array,
         title: "Pages",
