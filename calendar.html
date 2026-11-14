@@ -65,9 +65,10 @@ body{
 
 /* ===== 纸页（NOTON 版式，cqw = 页宽的 1%）===== */
 /* 收纳文件夹：手里拿着撕下的那页时，从右下角滑出来 */
-.fold{position:fixed;right:28px;bottom:24px;width:150px;pointer-events:none;
-  transform:translateX(calc(100% + 48px));transition:transform .5s cubic-bezier(.3,1.25,.5,1)}
-.fold.show{transform:none}
+.fold{position:fixed;left:0;top:0;width:150px;pointer-events:none;opacity:0;
+  transform:translateY(14px) scale(.97);transform-origin:50% 100%;
+  transition:opacity .18s ease-in,transform .22s ease-in}
+.fold.show{opacity:1;transform:none;transition:opacity .22s ease-out,transform .36s cubic-bezier(.2,.9,.3,1)}
 #fBack{height:184px;z-index:29}
 #fFront{height:124px;z-index:31;perspective:600px}
 #fBack .body{position:absolute;left:0;right:0;top:14px;bottom:0;border-radius:4px 10px 10px 10px;
@@ -9596,9 +9597,16 @@ function makeFlyer(el, r){
   fl.append(el); scene.append(fl); return fl;
 }
 const fBack=document.getElementById('fBack'), fFront=document.getElementById('fFront');
-function folder(on){ fBack.classList.toggle('show',on); fFront.classList.toggle('show',on);
+function placeFolder(){ // 放在日历右边，底边和纸齐平；右边放不下就退到右下角
+  const r=stack.getBoundingClientRect(), W=150, gap=Math.max(64, r.width*.16);
+  let x=r.right+gap, bottom=r.bottom;
+  if(x+W>innerWidth-12){ x=innerWidth-W-16; bottom=innerHeight-24; }
+  fBack.style.left=fFront.style.left=x+'px';
+  fBack.style.top=(bottom-184)+'px'; fFront.style.top=(bottom-124)+'px';
+}
+function folder(on){ if(on) placeFolder(); fBack.classList.toggle('show',on); fFront.classList.toggle('show',on);
   if(!on){ fBack.classList.remove('hot'); fFront.classList.remove('hot'); } }
-function overFolder(e){ const r=fBack.getBoundingClientRect(), m=50;
+function overFolder(e){ const r=fBack.getBoundingClientRect(), m=22;
   return fBack.classList.contains('show') && e.clientX>r.left-m && e.clientX<r.right+m && e.clientY>r.top-m && e.clientY<r.bottom+m; }
 function intoFolder(f){
   f.held=false;
