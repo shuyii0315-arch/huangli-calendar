@@ -36,7 +36,13 @@ body{min-height:100%;margin:0 auto;max-width:1040px;padding:0 28px 140px;backgro
 .acts .fr:hover{background:rgba(26,26,26,.05)}
 .acts .fr i{width:20px;height:20px;border-radius:7px;background:#111;display:grid;place-items:center;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
 .acts .fr:hover i{transform:rotate(-10deg) scale(1.08)}
-.acts .fr svg{width:10px;height:10px;fill:#fff;stroke:none}
+.acts .fr i svg{width:10px;height:10px;fill:#fff;stroke:none}
+.acts .fr{position:relative}
+.acts .fr .trace{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.acts .fr .trace rect{fill:none;stroke:#0099FF;stroke-width:1.5;stroke-dasharray:1 1;stroke-dashoffset:1;opacity:0;transition:stroke-dashoffset .7s cubic-bezier(.65,0,.35,1),opacity .15s}
+.acts .fr:hover .trace rect,.acts .fr:focus-visible .trace rect{stroke-dashoffset:0;opacity:1}
+@media (prefers-reduced-motion:reduce){.acts .fr .trace rect{transition:opacity .2s}}
+
 
 .desc{max-width:600px;font-size:14px;line-height:1.6;color:#55534F;margin:12px 0 14px}
 .desc+.desc{margin-top:-6px}
@@ -92,7 +98,7 @@ body.m-full #close{display:inline-flex}
     <div class="acts">
       <button id="share" title="Copy link"><svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg><span>Share</span></button>
       <a class="gh" href="https://github.com/shuyii0315-arch/huangli-calendar" target="_blank">GitHub</a>
-      <a class="fr" href="https://www.framer.com/marketplace/components/poster-rail/" target="_blank" title="Use it in Framer: Poster Rail"><i><svg viewBox="0 0 24 24"><path d="M4 0h16v8h-8zM4 8h8l8 8H4zM4 16h8v8z"/></svg></i>Framer component</a>
+      <a class="fr" href="https://www.framer.com/marketplace/components/poster-rail/" target="_blank" title="Use it in Framer: Poster Rail"><i><svg viewBox="0 0 24 24"><path d="M4 0h16v8h-8zM4 8h8l8 8H4zM4 16h8v8z"/></svg></i>Framer component<svg class="trace" aria-hidden="true"><rect x="0" y="0" width="100%" height="100%" rx="16" pathLength="1"/></svg></a>
     </div>
   </div>
   <p class="desc">A Chinese tear-off almanac that hangs on a metal bar. Every page is worked out for its real date: the lunar day, the solar term, what the day is good and bad for, tonight's moon. Pull a page off by hand, write on it with the pen on the chain, and keep a page as an image.</p>
