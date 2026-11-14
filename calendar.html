@@ -9115,8 +9115,11 @@ function setCurl(el, s, side){
 }
 
 /* ================= 墨迹 ================= */
-const store={get(k){try{return JSON.parse(localStorage.getItem('sili-ink-'+k)||'[]')}catch(e){return[]}},
-             set(k,v){try{v.length?localStorage.setItem('sili-ink-'+k,JSON.stringify(v)):localStorage.removeItem('sili-ink-'+k)}catch(e){}}};
+// session-only: a refresh puts everything back the way it was
+try{Object.keys(localStorage).forEach(k=>{if(/^sili-/.test(k))localStorage.removeItem(k)})}catch(e){}
+const _ink=new Map();
+const store={get(k){return JSON.parse(JSON.stringify(_ink.get(k)||[]))},
+             set(k,v){v.length?_ink.set(k,JSON.parse(JSON.stringify(v))):_ink.delete(k)}};
 const pathD=p=>{if(p.length<2)return p.length?`M${p[0][0]} ${p[0][1]}l.1 0`:'';let d=`M${p[0][0]} ${p[0][1]}`;
   for(let i=1;i<p.length-1;i++)d+=`Q${p[i][0]} ${p[i][1]} ${((p[i][0]+p[i+1][0])/2).toFixed(1)} ${((p[i][1]+p[i+1][1])/2).toFixed(1)}`;
   const L=p[p.length-1];return d+`L${L[0]} ${L[1]}`};
@@ -9591,7 +9594,8 @@ function makeFlyer(el, r){
 }
 /* ===== 墙：轻放就吸住，甩出去就扔掉 ===== */
 const PIN_S=.4, WALL='sili-wall';
-const wall={get(){try{return JSON.parse(localStorage.getItem(WALL)||'[]')}catch(e){return[]}}, set(v){try{localStorage.setItem(WALL,JSON.stringify(v))}catch(e){}}};
+let _wall=[];
+const wall={get(){return JSON.parse(JSON.stringify(_wall))}, set(v){_wall=JSON.parse(JSON.stringify(v))}};
 const pinned=[];
 function saveWall(){ document.getElementById('wallClr').hidden=!pinned.length; wall.set(pinned.map(p=>({d:ymd(p.date), x:+(p.x/innerWidth).toFixed(4), y:+(p.y/innerHeight).toFixed(4), r:+p.r.toFixed(2)}))); }
 // 纸顶边中点现在在屏幕上的哪里（磁铁就吸在那儿）
