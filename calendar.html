@@ -9556,6 +9556,7 @@ function dragMove(e){
 function tearFromHand(e, th, pv){
   const G2=grab, el=G2.el, r=G2.r;
   sndTear(.8+Math.random()*.3); hint.classList.add('gone');
+  setCurl(el,0); el.querySelectorAll('.flap').forEach(x=>x.remove()); if(peek.el===el){ peek.el=null; peek.s=peek.tgt=0; }
   const fl=makeFlyer(el, r);
   // 换成「捏点」为原点：位置让捏点落在指针下，角度接着刚才的
   fl.style.transformOrigin=`${G2.g.x}px ${G2.g.y}px`;
@@ -9645,17 +9646,24 @@ function mountPin(P, opt={}){
   pinned.push(P); placePin(P);
   const mag=fl.querySelector('.mag');
   if(opt.from){ // 从手里那么大，缩成墙上的小页；磁铁「啪」一下按上去，纸绕磁铁晃两下停住
-    const a=opt.from, w=fl.offsetWidth;
-    const T=(x,y,s,r)=>`translate(${x-w/2}px, ${y}px) rotate(${r}deg) scale(${s})`;
-    fl.animate([{transform:T(a.x,a.y,a.s,a.r)},{transform:T(P.x,P.y-6,PIN_S*1.04,P.r+(a.r-P.r)*.2),offset:.6},{transform:T(P.x,P.y,PIN_S,P.r)}],{duration:420,easing:'cubic-bezier(.2,.8,.3,1)'})
-      .finished.then(()=>swingPin(P, (P.r>0?-1:1)*5));
-    mag.animate([{transform:`scale(${1.9/PIN_S})`,opacity:0},{transform:`scale(${.9/PIN_S})`,opacity:1,offset:.75},{transform:`scale(${1/PIN_S})`}],{duration:300,delay:220,easing:'ease-out',fill:'backwards'});
+    const a=opt.from, w=fl.offsetWidth, L=(u,v,t)=>u+(v-u)*t;
+    tween(420, t=>{ const e=easeOut(t), b=Math.sin(Math.PI*Math.min(1,t/.85));
+      P.el.style.transform=`translate(${L(a.x,P.x,e)-w/2}px, ${L(a.y,P.y,e)-6*b}px) rotate(${L(a.r,P.r,e)}deg) scale(${L(a.s,PIN_S,e)*(1+.04*b)})`; },
+      ()=>swingPin(P, (P.r>0?-1:1)*5));
+    mag.style.opacity=0;
+    setTimeout(()=>tween(300, t=>{ const s=t<.75? L(1.9,.9,easeOut(t/.75)) : L(.9,1,(t-.75)/.25);
+      mag.style.opacity=Math.min(1,t/.5); mag.style.transform=`scale(${s/PIN_S})`; }), 220);
   }
   bindPin(P);
 }
+// 用 rAF 跑的小补间（不用 WAAPI：和物理同一个时钟，停在哪一帧就是哪一帧）
+function tween(ms, fn, done){ let t0=null, id=0;
+  const go=now=>{ if(t0===null) t0=now; const t=Math.min(1,(now-t0)/ms); fn(t); if(t<1) id=requestAnimationFrame(go); else if(done) done(); };
+  id=requestAnimationFrame(go); return ()=>cancelAnimationFrame(id); }
 function swingPin(P, kick){
-  const k=[]; for(let i=0;i<=24;i++){ const t=i/24; k.push({transform:`translate(${P.x-P.el.offsetWidth/2}px, ${P.y}px) rotate(${P.r+kick*Math.exp(-4.5*t)*Math.cos(t*Math.PI*5)}deg) scale(${PIN_S})`}); }
-  P.el.animate(k,{duration:1100,easing:'linear'});
+  if(P.stop) P.stop();
+  const w=P.el.offsetWidth;
+  P.stop=tween(1100, t=>{ P.el.style.transform=`translate(${P.x-w/2}px, ${P.y}px) rotate(${P.r+kick*Math.exp(-4.5*t)*Math.cos(t*Math.PI*5)}deg) scale(${PIN_S})`; }, ()=>{ P.stop=null; placePin(P); });
 }
 function bindPin(P){
   const fl=P.el;
@@ -9665,7 +9673,7 @@ function bindPin(P){
     fl.setPointerCapture(e.pointerId);
     fl.onpointermove=ev=>{ hist.push([ev.clientX,ev.clientY,performance.now()]); if(hist.length>8) hist.shift();
       if(!moved && Math.hypot(ev.clientX-x0,ev.clientY-y0)<6) return;
-      if(!moved){ moved=true; fl.classList.add('lift'); fl.getAnimations().forEach(a=>a.cancel()); sndPluck(.5); }
+      if(!moved){ moved=true; fl.classList.add('lift'); if(P.stop){P.stop();P.stop=null;} sndPluck(.5); }
       P.x=px+ev.clientX-x0; P.y=py+ev.clientY-y0; placePin(P, PIN_S*1.06, P.r*.5); };
     fl.onpointerup=fl.onpointercancel=ev=>{
       fl.onpointermove=fl.onpointerup=fl.onpointercancel=null; fl.classList.remove('lift');
@@ -9680,7 +9688,7 @@ function bindPin(P){
 }
 function dropPin(P, vx=0, vy=0){ // 从墙上掉下去
   const fl=P.el, w=fl.offsetWidth;
-  pinned.splice(pinned.indexOf(P),1); saveWall(); fl.onpointerdown=null; fl.getAnimations().forEach(a=>a.cancel());
+  pinned.splice(pinned.indexOf(P),1); saveWall(); fl.onpointerdown=null; if(P.stop){P.stop();P.stop=null;}
   const m=fl.querySelector('.mag'); if(m) m.remove();
   fl.className='flyer'; fl.style.transformOrigin='50% 0'; fl.style.zIndex=30;
   flyers.push({el:fl, held:false, sc:PIN_S, x:P.x-w/2, y:P.y, r:P.r, vx:Math.max(-1400,Math.min(1400,vx)), vy:Math.max(-300,Math.min(1400,vy)), w:(Math.random()*2-1)*.6, t:0, seed:Math.random()*6, flip:0});
