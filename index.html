@@ -70,7 +70,6 @@ body.m-full #close{display:inline-flex}
 <section class="demo" id="demo">
   <div class="dctl l">
     <button id="today" title="Back to today"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Today</span></button>
-    <button id="tear" title="Tear off a page"><svg viewBox="0 0 24 24"><path d="M6 3h12v14l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 17z"/><path d="M6 21h12"/></svg><span>Tear</span></button>
   </div>
   <div class="dctl r"><button id="expand" title="Full screen"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
   <iframe id="cal" src="calendar.html" title="Huangli Calendar" allow="clipboard-write"></iframe>
@@ -122,7 +121,6 @@ function spec(k,run){
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>spec(b.dataset.k,1));
 spec('tear');
 $('#today').onclick=()=>send('hl:today');
-$('#tear').onclick=()=>send('hl:tear');
 $('#expand').onclick=()=>document.body.classList.add('m-full');
 $('#close').onclick=()=>document.body.classList.remove('m-full');
 addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('m-full')});

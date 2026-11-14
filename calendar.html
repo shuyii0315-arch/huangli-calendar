@@ -160,6 +160,10 @@ body.chainheld #pencil svg{filter:drop-shadow(12px 18px 9px rgba(30,35,40,.2))}
   background:#f7f7f7;
   box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.06),0 6px 16px rgba(30,35,40,.10),0 1px 2px rgba(30,35,40,.06)}
 #main{height:64px;padding:0 10px 0 0;gap:4px}
+#util{height:64px;padding:0 8px;gap:2px}
+#util .pill.icon{width:44px;height:48px;border-radius:10px;background:none;color:#6a6b6f}
+#util .pill.icon:hover{background:rgba(0,0,0,.06);color:#1f2023}
+#util .pill.icon svg{width:20px;height:20px}
 #main .vsep{height:40px;margin:0 10px 0 6px;background:rgba(0,0,0,.12)}
 #main .pill.icon{width:38px;height:38px;border-radius:10px;background:none;color:#6a6b6f}
 #main .pill.icon:hover{background:rgba(0,0,0,.06);color:#1f2023}
@@ -175,7 +179,7 @@ body.chainheld #pencil svg{filter:drop-shadow(12px 18px 9px rgba(30,35,40,.2))}
 #main .slot.on .pen-mini{top:5px}
 #main .slot:hover .pen-mini.er{top:34px}#main .slot.on .pen-mini.er{top:24px}
 #main .pen-mini .nib{opacity:1}#main .pen-mini .cap{opacity:0}#main .pen-mini .lead{transform:none}
-#dock{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:40}
+#dock{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:40;display:flex;gap:10px;align-items:flex-end}
 .pill{position:relative;height:40px;padding:0 14px;border:0;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
   background:rgba(0,0,0,.045);color:#55565a;font:500 13px/1 Inter,"Noto Sans SC",sans-serif;letter-spacing:.01em;white-space:nowrap;
   transition:background .15s,color .15s,box-shadow .15s,transform .12s}
@@ -300,7 +304,8 @@ body.holding .stack .page{cursor:none}
       <button class="slot" data-tool="hl" title="Highlighter"><span class="pen-mini"></span></button>
       <button class="slot ers" data-tool="eraser" title="Eraser"><span class="pen-mini er"></span></button>
     </div>
-    <i class="vsep"></i>
+  </div>
+  <div class="bar2" id="util">
     <button class="pill icon" id="dateBtn" title="Go to date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="dTxt" hidden></span></button>
     <button class="pill icon" id="dl" title="Save this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16v2.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></button>
   </div>
