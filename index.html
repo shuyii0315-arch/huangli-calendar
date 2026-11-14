@@ -72,7 +72,7 @@ body.m-full #close{display:inline-flex}
     <button id="today" title="Back to today"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Today</span></button>
     <button id="expand" title="Full screen"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
   </div>
-  <iframe id="cal" src="calendar.html?v=10" title="Huangli Calendar" allow="clipboard-write"></iframe>
+  <iframe id="cal" src="calendar.html?v=11" title="Huangli Calendar" allow="clipboard-write"></iframe>
 </section>
 <button id="close" title="Exit full screen"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 
@@ -108,8 +108,8 @@ const SPEC={
     [["Pens","pencil, fineliner, marker, highlighter"],["Pull","<u>0.42s</u>, ease-out"],["Chain","up to 1.05× the page width"],["Eraser","cuts strokes where it rubs"],["Undo","⌘Z · ⇧⌘Z, per page"]]],
   charts:["Each new page sets its charts to that day. The earth walks its orbit, the solar-term needle spins into place, the moon fills to tonight's phase. Hover a chart to spin it again.",
     [["Orbit","earth −160° → today, moon 2 laps"],["Solar term","1 turn, then a spring, <u>1.5s</u>"],["Moon","new moon → tonight, 1.5s"],["Stagger","70ms between charts"],["Data","computed offline, any date"]]],
-  save:["A torn page is either kept or let go. Set it down gently on the wall and a magnet holds it there, with what you wrote on it; fling it and it drifts off. Kept pages stay on the wall next time you visit. Tap one to save it as a PNG.",
-    [["Keep","release under <u>900px/s</u>, clear of the calendar"],["On the wall","40% size, swings to rest in 1.1s"],["Let go","fling it, or drag it off the wall"],["Remembered","positions kept in this browser"],["Tap","PNG, 3× pixel ratio, huangli-YYYY-MM-DD.png"]]]
+  save:["A torn page is either kept or let go. Carry it off the calendar and it shrinks to wall size, with a magnet showing where it will hold; let go and it sticks. Fling it and it drifts off. Kept pages stay on the wall next time; tap one to save it as a PNG, or clear the wall from the top corner.",
+    [["Preview","page shrinks to <u>40%</u> + ghost magnet over open wall"],["Let go","fling over 1500px/s, or over the calendar"],["On the wall","swings to rest in 1.1s"],["Clear","magnets let go one by one, 90ms apart"],["Tap","PNG, 3× pixel ratio, huangli-YYYY-MM-DD.png"]]]
 };
 const RUN={tear:'hl:tear',write:'hl:write',charts:'hl:charts'};
 function spec(k,run){

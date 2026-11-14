@@ -71,6 +71,8 @@ body{
 .mag{position:absolute;left:50%;top:0;width:28px;height:28px;margin:-10px 0 0 -14px;border-radius:50%;z-index:3;pointer-events:none;
   background:radial-gradient(circle at 38% 32%,#fff 0 6%,transparent 26%),conic-gradient(from 20deg,#d9dadc,#f4f5f6,#b9bbbf,#eceef0,#c6c8cb,#f7f8f9,#d9dadc);
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.10),inset 0 -2px 3px rgba(0,0,0,.12),0 3px 5px rgba(0,0,0,.22),0 1px 1px rgba(0,0,0,.2)}
+.mag.ghost{position:fixed;left:0;top:0;margin:-14px 0 0 -14px;z-index:33;opacity:0;transform:scale(.6);transition:opacity .18s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.mag.ghost.on{opacity:.9;transform:none}
 .mag::after{content:"";position:absolute;inset:7px;border-radius:50%;background:conic-gradient(from 200deg,#cfd1d4,#f3f4f5,#b3b5b9,#e9ebed,#cfd1d4);box-shadow:inset 0 1px 1px rgba(0,0,0,.18)}
 .flyer{position:fixed;container-type:inline-size;z-index:30;pointer-events:none}
 .flyer .page{pointer-events:none}
@@ -299,8 +301,10 @@ body.holding .stack .page{cursor:none}
   <div id="util">
     <div class="pop paper" id="calpop"></div>
     <button class="pill icon" id="dateBtn" title="Go to date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="dTxt" hidden></span></button>
+    <button class="pill icon" id="wallClr" title="Clear the wall" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6.5" width="7" height="9" rx="1"/><rect x="13" y="4" width="7" height="9" rx="1"/><circle cx="7.5" cy="6.5" r="1.2" fill="currentColor"/><circle cx="16.5" cy="4" r="1.2" fill="currentColor"/><path d="M5 20.5h14"/></svg></button>
     <button class="pill icon" id="dl" title="Save this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16v2.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></button>
   </div>
+<i class="mag ghost" id="ghost"></i>
 <div id="dock">
   <div id="sub" class="bar2">
     <button class="pill icon" id="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
@@ -9383,6 +9387,7 @@ function frame(t){
     const f=flyers[i];
     if(f.held){
       const px=f.x, py=f.y;
+      f.sc += ((f.scT||1)-f.sc)*Math.min(1,dt*14);
       f.x+=(f.tx-f.x)*Math.min(1,dt*28); f.y+=(f.ty-f.y)*Math.min(1,dt*28);
       const vx=(f.x-px)/Math.max(dt,.001);
       const target=Math.max(-32,Math.min(32,-vx*.035));      // 往右甩，纸往左飘
@@ -9519,7 +9524,7 @@ function dragMove(e){
   const dx=e.clientX-G2.x0, dy=e.clientY-G2.y0;
   if(!G2.moved && Math.hypot(dx,dy)<10) return;   // 不是明显的拖，就不动（点一下不会撕）
   G2.moved=true;
-  if(G2.fly){ G2.fly.tx=e.clientX-G2.g.x; G2.fly.ty=e.clientY-G2.g.y; return; }
+  if(G2.fly){ G2.fly.tx=e.clientX-G2.g.x; G2.fly.ty=e.clientY-G2.g.y; updatePinPreview(G2.fly); return; }
   const {r,g}=G2, P={x:e.clientX-r.left, y:e.clientY-r.top};
   // 往哪边拉，就从那一侧撕开；支点在另一侧的顶角
   if(!G2.side || Math.abs(dx)>14) G2.side = Math.abs(dx)>3 ? Math.sign(dx) : (g.x<r.width/2?1:-1);
@@ -9549,7 +9554,7 @@ function tearFromHand(e, th, pv){
   const fl=makeFlyer(el, r);
   // 换成「捏点」为原点：位置让捏点落在指针下，角度接着刚才的
   fl.style.transformOrigin=`${G2.g.x}px ${G2.g.y}px`;
-  const f={date:new Date(cur), sc:1, el:fl, held:true, x:e.clientX-G2.g.x, y:e.clientY-G2.g.y, tx:e.clientX-G2.g.x, ty:e.clientY-G2.g.y, r:th, rv:0, t:0, seed:Math.random()*6, flip:0};
+  const f={date:new Date(cur), sc:1, scT:1, el:fl, held:true, x:e.clientX-G2.g.x, y:e.clientY-G2.g.y, tx:e.clientX-G2.g.x, ty:e.clientY-G2.g.y, r:th, rv:0, t:0, seed:Math.random()*6, flip:0};
   flyers.push(f); G2.fly=f;
   sw.v += Math.sign(th)*.04; sw.yv = -sw.y*22 - 10;
   advance();
@@ -9557,7 +9562,8 @@ function tearFromHand(e, th, pv){
 function dragEnd(e){
   const G2=grab; grab=null; G2.el.style.cursor='';
   if(G2.fly){ G2.el.onpointermove=G2.el.onpointerup=G2.el.onpointercancel=null; }
-  if(G2.fly){ const [vx,vy]=velocity(G2.hist); if(e.clientX!=null && tryPin(G2.fly, vx, vy, e.clientX, e.clientY)) return; }
+  if(G2.fly){ const [vx,vy]=velocity(G2.hist); if(e.clientX!=null && tryPin(G2.fly, vx, vy)) return; }
+  ghost.classList.remove('on');
   if(G2.fly){ const [vx,vy]=velocity(G2.hist); const f=G2.fly; f.held=false; f.vx=Math.max(-1400,Math.min(1400,vx)); f.vy=Math.max(-600,Math.min(1400,vy)); f.w=f.rv/60; f.t=0; return; }
   if(!G2.moved){ if(G2.cs0){ peek.el=G2.el; peek.s=peek.tgt=G2.cs0; peek.side=G2.cside; } nudge(G2.el); return; }
   const el=G2.el; // 没撕断：弹回去
@@ -9579,10 +9585,10 @@ function makeFlyer(el, r){
 const PIN_S=.4, WALL='sili-wall';
 const wall={get(){try{return JSON.parse(localStorage.getItem(WALL)||'[]')}catch(e){return[]}}, set(v){try{localStorage.setItem(WALL,JSON.stringify(v))}catch(e){}}};
 const pinned=[];
-function saveWall(){ wall.set(pinned.map(p=>({d:ymd(p.date), x:+(p.x/innerWidth).toFixed(4), y:+(p.y/innerHeight).toFixed(4), r:+p.r.toFixed(2)}))); }
+function saveWall(){ document.getElementById('wallClr').hidden=!pinned.length; wall.set(pinned.map(p=>({d:ymd(p.date), x:+(p.x/innerWidth).toFixed(4), y:+(p.y/innerHeight).toFixed(4), r:+p.r.toFixed(2)}))); }
 // 纸顶边中点现在在屏幕上的哪里（磁铁就吸在那儿）
-function topMid(f){
-  const w=f.el.offsetWidth, o=f.el.style.transformOrigin.split(' ').map(parseFloat), s=f.sc||1, a=f.r*Math.PI/180;
+function topMid(f, s=f.sc||1, r=f.r){
+  const w=f.el.offsetWidth, o=f.el.style.transformOrigin.split(' ').map(parseFloat), a=r*Math.PI/180;
   const dx=(w/2-o[0])*s, dy=(0-o[1])*s;
   return {x:f.x+o[0]+dx*Math.cos(a)-dy*Math.sin(a), y:f.y+o[1]+dx*Math.sin(a)+dy*Math.cos(a)};
 }
@@ -9590,14 +9596,26 @@ function canPin(x,y,w,h){
   const r=stack.getBoundingClientRect(), bar=document.getElementById('bar').getBoundingClientRect(), dk=document.getElementById('dock').getBoundingClientRect(), m=10;
   const box={l:x-w/2, r:x+w/2, t:y, b:y+h};
   const hit=q=>box.l<q.right+m && box.r>q.left-m && box.t<q.bottom+m && box.b>q.top-m;
-  return box.l>8 && box.r<innerWidth-8 && box.t>8 && box.b<innerHeight-8 && !hit(r) && !hit(bar) && !hit(dk);
+  return !hit(r) && !hit(bar) && !hit(dk);
 }
-function tryPin(f, vx, vy, cx, cy){
-  if(Math.hypot(vx,vy)>900) return false;           // 甩出去的：扔掉
-  const w=f.el.offsetWidth, h=f.el.offsetHeight, p=topMid(f);
-  // 小页以手的位置为中心贴上去
-  const tx=cx, ty=cy-h*PIN_S*.5;
-  if(!canPin(tx, ty, w*PIN_S, h*PIN_S)) return false;
+// 拿着撕下的页时：离开日历、到了空墙上，纸就缩成墙上那么大，磁铁的虚影出现在它要吸住的地方
+function pinSpot(f){
+  const w=f.el.offsetWidth*PIN_S, h=f.el.offsetHeight*PIN_S, p=topMid(f, PIN_S, 0);
+  const x=Math.max(w/2+10, Math.min(innerWidth-w/2-10, p.x)), y=Math.max(14, Math.min(innerHeight-h-10, p.y));
+  return canPin(x,y,w,h) ? {x,y} : null;
+}
+const ghost=document.getElementById('ghost');
+function updatePinPreview(f){
+  f.spot=pinSpot(f); f.scT=f.spot?PIN_S:1;
+  ghost.classList.toggle('on', !!f.spot);
+  if(f.spot) ghost.style.left=f.spot.x+'px', ghost.style.top=f.spot.y+'px';
+}
+function tryPin(f, vx, vy){
+  ghost.classList.remove('on');
+  if(Math.hypot(vx,vy)>1500) return false;          // 用力甩出去的：扔掉
+  const w=f.el.offsetWidth, h=f.el.offsetHeight, p=topMid(f), sp=pinSpot(f);
+  if(!sp) return false;
+  const tx=sp.x, ty=sp.y;
   flyers.splice(flyers.indexOf(f),1);
   const fl=f.el; fl.className='pinned'; fl.style.cssText=`width:${w}px;height:${h}px`; fl.style.opacity='';
   const P={el:fl, date:f.date, x:tx, y:ty, r:(Math.random()*2-1)*3.5};
@@ -9640,14 +9658,22 @@ function bindPin(P){
         exportPage(fl.querySelector('.page'), P.date); return; }               // 点一下：存成图片
       const [vx,vy]=velocity(hist), w=fl.offsetWidth, h=fl.offsetHeight;
       if(Math.hypot(vx,vy)>900 || !canPin(P.x,P.y,w*PIN_S,h*PIN_S)){         // 甩掉：从墙上掉下去
-        pinned.splice(pinned.indexOf(P),1); saveWall(); fl.onpointerdown=null; fl.querySelector('.mag').remove();
-        fl.className='flyer'; fl.style.transformOrigin='50% 0'; fl.style.zIndex=30;
-        flyers.push({el:fl, held:false, sc:PIN_S, x:P.x-w/2, y:P.y, r:P.r, vx:Math.max(-1400,Math.min(1400,vx)), vy:Math.max(-300,Math.min(1400,vy)), w:0, t:0, seed:Math.random()*6, flip:0});
-        sndTear(.35); return; }
+        dropPin(P, vx, vy); sndTear(.35); return; }
       placePin(P); swingPin(P, Math.max(-6,Math.min(6,vx*.004))); sndMagnet(.6); saveWall();
     };
   };
 }
+function dropPin(P, vx=0, vy=0){ // 从墙上掉下去
+  const fl=P.el, w=fl.offsetWidth;
+  pinned.splice(pinned.indexOf(P),1); saveWall(); fl.onpointerdown=null; fl.getAnimations().forEach(a=>a.cancel());
+  const m=fl.querySelector('.mag'); if(m) m.remove();
+  fl.className='flyer'; fl.style.transformOrigin='50% 0'; fl.style.zIndex=30;
+  flyers.push({el:fl, held:false, sc:PIN_S, x:P.x-w/2, y:P.y, r:P.r, vx:Math.max(-1400,Math.min(1400,vx)), vy:Math.max(-300,Math.min(1400,vy)), w:(Math.random()*2-1)*.6, t:0, seed:Math.random()*6, flip:0});
+}
+document.getElementById('wallClr').onclick=e=>{ // 清空墙：磁铁一个个松开，纸依次掉下去
+  e.stopPropagation(); closePops();
+  [...pinned].sort((a,b)=>a.x-b.x).forEach((P,i)=>setTimeout(()=>{ if(pinned.includes(P)){ dropPin(P,(Math.random()*2-1)*80,40); sndMagnet(.35); } }, i*90));
+};
 function restoreWall(){
   wall.get().forEach(q=>{ const [Y,M,D]=q.d.split('-').map(Number), d=new Date(Y,M-1,D);
     const pg=makePage(d); pg.classList.remove('under'); loadInk(pg); settleFigs(pg);
@@ -10020,7 +10046,7 @@ addEventListener('message',e=>{
   else if(d==='hl:charts') animateFigs(topPage());
   else if(d==='hl:today'){ jump(new Date()); }
 });
-render(); layout(); sw.a=.012; restoreWall();
+render(); layout(); sw.a=.012; restoreWall(); saveWall();
 (document.fonts?document.fonts.ready:Promise.resolve()).then(layout);
 requestAnimationFrame(frame);
 })();
