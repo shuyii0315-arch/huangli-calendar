@@ -81,7 +81,7 @@ body{
 .flyer{position:fixed;container-type:inline-size;z-index:30;pointer-events:none}
 .flyer .page{pointer-events:none}
 /* 撕下来的和贴在墙上的：不再透出身后的日历，去掉实时模糊（移动、缩放时不会闪） */
-.flyer .page,.pinned .page{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--fiber),var(--grain),rgba(253,253,251,.95);background-size:320px 320px,200px 200px,auto}
+.flyer .page,.pinned .page{will-change:auto;-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--fiber),var(--grain),rgba(253,253,251,.95);background-size:320px 320px,200px 200px,auto}
 .page{
   position:absolute;inset:0;
   background:var(--fiber),var(--grain),rgba(253,253,251,.83);
