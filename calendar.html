@@ -64,6 +64,22 @@ body{
   clip-path:polygon(0 0,100% 0,100% 40%,96% 90%,91% 30%,85% 100%,78% 45%,72% 85%,65% 30%,59% 95%,52% 40%,46% 85%,39% 30%,33% 100%,26% 50%,20% 85%,13% 40%,7% 95%,0 50%)}
 
 /* ===== 纸页（NOTON 版式，cqw = 页宽的 1%）===== */
+/* 收纳文件夹：手里拿着撕下的那页时，从右下角滑出来 */
+.fold{position:fixed;right:28px;bottom:24px;width:150px;pointer-events:none;
+  transform:translateX(calc(100% + 48px));transition:transform .5s cubic-bezier(.3,1.25,.5,1)}
+.fold.show{transform:none}
+#fBack{height:184px;z-index:29}
+#fFront{height:124px;z-index:31;perspective:600px}
+#fBack .body{position:absolute;left:0;right:0;top:14px;bottom:0;border-radius:4px 10px 10px 10px;
+  background:linear-gradient(#e2e2df,#d6d6d3 70%);box-shadow:0 0 0 1px rgba(0,0,0,.05),0 14px 26px rgba(30,35,40,.12)}
+#fBack .tab{position:absolute;left:0;top:0;width:62px;height:18px;border-radius:6px 8px 0 0;background:#e2e2df;
+  box-shadow:0 0 0 1px rgba(0,0,0,.05);font:600 9px/18px Inter,sans-serif;letter-spacing:.14em;color:#8d8d89;padding-left:10px}
+#fFront .lid{position:absolute;inset:0;-webkit-mask:radial-gradient(circle 17px at 50% 0,transparent 16px,#000 17px);mask:radial-gradient(circle 17px at 50% 0,transparent 16px,#000 17px);border-radius:4px 4px 10px 10px;transform-origin:50% 100%;
+  background:linear-gradient(#f6f6f4,#ececea);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.06),0 -2px 8px rgba(30,35,40,.06);
+  transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+#fFront .lid::after{content:"";position:absolute;left:14px;right:14px;bottom:16px;height:1px;background:rgba(0,0,0,.06)}
+.fold.hot#fFront .lid{transform:rotateX(-28deg)}
+.fold.hot#fBack .body{background:linear-gradient(#dcdcd9,#d3d3d0)}
 .flyer{position:fixed;container-type:inline-size;z-index:30;pointer-events:none}
 .flyer .page{pointer-events:none}
 .page{
@@ -160,6 +176,7 @@ body.chainheld #pencil svg{filter:drop-shadow(12px 18px 9px rgba(30,35,40,.2))}
   background:#f7f7f7;
   box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.06),0 6px 16px rgba(30,35,40,.10),0 1px 2px rgba(30,35,40,.06)}
 #main{height:64px;padding:0;gap:4px}
+#dl{display:none!important}
 #util{position:fixed;top:16px;right:16px;z-index:40;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.8);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.05),inset 0 0 0 .5px rgba(26,26,26,.08)}
 #util .pill.icon{width:34px;height:30px;border-radius:999px;background:none;color:#3A3936}
@@ -292,6 +309,8 @@ body.holding .stack .page{cursor:none}
     <button class="pill icon" id="dateBtn" title="Go to date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="dTxt" hidden></span></button>
     <button class="pill icon" id="dl" title="Save this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16v2.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></button>
   </div>
+<div class="fold" id="fBack"><div class="tab">SAVE</div><div class="body"></div></div>
+<div class="fold" id="fFront"><div class="lid"></div></div>
 <div id="dock">
   <div id="sub" class="bar2">
     <button class="pill icon" id="undo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
@@ -9372,14 +9391,23 @@ function frame(t){
   // 撕下来的纸：还在手里就跟着走，松手后轻轻飘落
   for(let i=flyers.length-1;i>=0;i--){
     const f=flyers[i];
+    if(f.into){
+      const k=f.into; k.t+=dt; const p=Math.min(1,k.t/.62), e1=easeOut(Math.min(1,p/.5)), e2=Math.max(0,(p-.42)/.58);
+      const s=k.s0+(k.s1-k.s0)*e1, cx=k.cx0+(k.cx1-k.cx0)*e1, cy=k.cy0+(k.cy1-k.cy0)*e1 + k.drop*e2*e2;
+      const r=k.r0*(1-e1);
+      f.el.style.transform=`translate(${cx-k.w/2}px, ${cy-k.h/2}px) rotate(${r}deg) scale(${s})`;
+      if(p>=1){ f.el.style.opacity=0; flyers.splice(i,1); k.done(); }
+      continue;
+    }
     if(f.held){
       const px=f.x, py=f.y;
+      f.sc += ((f.hot?.4:1)-f.sc)*Math.min(1,dt*12);
       f.x+=(f.tx-f.x)*Math.min(1,dt*28); f.y+=(f.ty-f.y)*Math.min(1,dt*28);
       const vx=(f.x-px)/Math.max(dt,.001);
       const target=Math.max(-32,Math.min(32,-vx*.035));      // 往右甩，纸往左飘
       f.rv += ((target-f.r)*70 - f.rv*11)*dt; f.r += f.rv*dt;
       f.flip += ((Math.max(-18,Math.min(18,vx*.02)))-f.flip)*Math.min(1,dt*6);
-      f.el.style.transform=`translate(${f.x}px, ${f.y}px) rotate(${f.r}deg) perspective(1200px) rotateY(${f.flip}deg)`;
+      f.el.style.transform=`translate(${f.x}px, ${f.y}px) rotate(${f.r}deg) scale(${f.sc}) perspective(1200px) rotateY(${f.flip}deg)`;
       continue;
     }
     f.t+=dt;
@@ -9510,7 +9538,7 @@ function dragMove(e){
   const dx=e.clientX-G2.x0, dy=e.clientY-G2.y0;
   if(!G2.moved && Math.hypot(dx,dy)<10) return;   // 不是明显的拖，就不动（点一下不会撕）
   G2.moved=true;
-  if(G2.fly){ G2.fly.tx=e.clientX-G2.g.x; G2.fly.ty=e.clientY-G2.g.y; return; }
+  if(G2.fly){ G2.fly.tx=e.clientX-G2.g.x; G2.fly.ty=e.clientY-G2.g.y; G2.fly.hot=overFolder(e); fBack.classList.toggle('hot',G2.fly.hot); fFront.classList.toggle('hot',G2.fly.hot); return; }
   const {r,g}=G2, P={x:e.clientX-r.left, y:e.clientY-r.top};
   // 往哪边拉，就从那一侧撕开；支点在另一侧的顶角
   if(!G2.side || Math.abs(dx)>14) G2.side = Math.abs(dx)>3 ? Math.sign(dx) : (g.x<r.width/2?1:-1);
@@ -9540,14 +9568,16 @@ function tearFromHand(e, th, pv){
   const fl=makeFlyer(el, r);
   // 换成「捏点」为原点：位置让捏点落在指针下，角度接着刚才的
   fl.style.transformOrigin=`${G2.g.x}px ${G2.g.y}px`;
-  const f={el:fl, held:true, x:e.clientX-G2.g.x, y:e.clientY-G2.g.y, tx:e.clientX-G2.g.x, ty:e.clientY-G2.g.y, r:th, rv:0, t:0, seed:Math.random()*6, flip:0};
-  flyers.push(f); G2.fly=f;
+  const f={date:new Date(cur), sc:1, el:fl, held:true, x:e.clientX-G2.g.x, y:e.clientY-G2.g.y, tx:e.clientX-G2.g.x, ty:e.clientY-G2.g.y, r:th, rv:0, t:0, seed:Math.random()*6, flip:0};
+  flyers.push(f); G2.fly=f; folder(true);
   sw.v += Math.sign(th)*.04; sw.yv = -sw.y*22 - 10;
   advance();
 }
 function dragEnd(e){
   const G2=grab; grab=null; G2.el.style.cursor='';
   if(G2.fly){ G2.el.onpointermove=G2.el.onpointerup=G2.el.onpointercancel=null; }
+  if(G2.fly && G2.fly.hot){ intoFolder(G2.fly); return; }
+  if(G2.fly) setTimeout(()=>{ if(!grab||!grab.fly) folder(false); },250);
   if(G2.fly){ const [vx,vy]=velocity(G2.hist); const f=G2.fly; f.held=false; f.vx=Math.max(-1400,Math.min(1400,vx)); f.vy=Math.max(-600,Math.min(1400,vy)); f.w=f.rv/60; f.t=0; return; }
   if(!G2.moved){ if(G2.cs0){ peek.el=G2.el; peek.s=peek.tgt=G2.cs0; peek.side=G2.cside; } nudge(G2.el); return; }
   const el=G2.el; // 没撕断：弹回去
@@ -9564,6 +9594,25 @@ function makeFlyer(el, r){
   fl.style.cssText=`left:0;top:0;width:${r.width}px;height:${r.height}px`;
   el.style.transform=''; el.style.filter='drop-shadow(0 12px 16px rgba(0,0,0,.14))'; el.onpointerdown=null;
   fl.append(el); scene.append(fl); return fl;
+}
+const fBack=document.getElementById('fBack'), fFront=document.getElementById('fFront');
+function folder(on){ fBack.classList.toggle('show',on); fFront.classList.toggle('show',on);
+  if(!on){ fBack.classList.remove('hot'); fFront.classList.remove('hot'); } }
+function overFolder(e){ const r=fBack.getBoundingClientRect(), m=50;
+  return fBack.classList.contains('show') && e.clientX>r.left-m && e.clientX<r.right+m && e.clientY>r.top-m && e.clientY<r.bottom+m; }
+function intoFolder(f){
+  f.held=false;
+  const fl=f.el, w=fl.offsetWidth, h=fl.offsetHeight, o=fl.style.transformOrigin.split(' ').map(parseFloat);
+  // 以纸的中心为原点重新算一次位置，然后整张缩小、摆正，从文件夹口滑进去
+  const vx=f.x+o[0]*(1-f.sc), vy=f.y+o[1]*(1-f.sc);
+  fl.style.transformOrigin='50% 50%';
+  const b=fBack.getBoundingClientRect(), fr=fFront.getBoundingClientRect(), s1=(b.width-26)/w;
+  f.into={t:0, w, h, s0:f.sc, s1, r0:f.r, cx0:vx+w*f.sc/2, cy0:vy+h*f.sc/2,
+          cx1:b.left+b.width/2, cy1:fr.top-h*s1*.28, drop:h*s1*.62,
+          done:()=>{ sndFile(); fBack.classList.remove('hot'); fFront.classList.remove('hot');
+                     setTimeout(()=>folder(false),700); } };
+  const page=fl.querySelector('.page');
+  exportPage(page, f.date).finally(()=>fl.remove());
 }
 function advance(){
   cur=addDays(cur,1); sync();
@@ -9735,7 +9784,15 @@ function scratchOff(){ if(!scratch) return; const s=scratch; scratch=null; s.g.g
 const FONT_CSS = document.getElementById('fontcss').textContent;
 let dlApi=null;
 if(window.claude && claude.use) claude.use('downloads').then(d=>{dlApi=d}).catch(()=>{});
-async function exportPage(){
+async function exportPage(node, date){
+  if(node){ // 撕下来、放进文件夹的那一页
+    try{ settleFigs(node);
+      const blob=await htmlToImage.toBlob(node,{pixelRatio:3,fontEmbedCSS:FONT_CSS,backgroundColor:'#fbfbf9',
+        style:{transform:'none',filter:'none',background:'#fbfbf9',backdropFilter:'none',webkitBackdropFilter:'none',clipPath:'none'}});
+      await saveBlob(blob, `huangli-${ymd(date)}.png`);
+    }catch(e){ console.error(e); }
+    return;
+  }
   const btn=document.getElementById('dl'); btn.classList.add('busy');
   try{
     // 直接截当前这一页：把底下透出来的几页排除掉，背景铺成不透明的纸色
@@ -9743,12 +9800,24 @@ async function exportPage(){
     const blob=await htmlToImage.toBlob(stack,{pixelRatio:3,fontEmbedCSS:FONT_CSS,backgroundColor:'#fbfbf9',
       filter:n=>!(n.classList&&n.classList.contains('under'))});
     stack.classList.remove('exporting');
-    const name=`huangli-${ymd(cur)}.png`;
-    if(!dlApi && window.claude && claude.use){ try{ dlApi=await claude.use('downloads'); }catch(e){} }
-    if(dlApi){ try{ await dlApi.save({filename:name,data:blob}); }catch(e){} }
-    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000); }
+    await saveBlob(blob, `huangli-${ymd(cur)}.png`);
   }catch(e){ console.error(e); }
   stack.classList.remove('exporting'); btn.classList.remove('busy');
+}
+async function saveBlob(blob, name){
+  if(!dlApi && window.claude && claude.use){ try{ dlApi=await claude.use('downloads'); }catch(e){} }
+  if(dlApi){ try{ await dlApi.save({filename:name,data:blob}); return; }catch(e){} }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+function sndFile(){ // 纸滑进文件夹：一声短促的摩擦 + 合上的轻响
+  if(!audio()) return;
+  const buf=noiseBuf(.22,t=>(Math.random()*2-1)*Math.sin(Math.PI*t)*.9);
+  const src=ac.createBufferSource(); src.buffer=buf; const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=1.2;
+  bp.frequency.setValueAtTime(2600,ac.currentTime); bp.frequency.exponentialRampToValueAtTime(900,ac.currentTime+.22);
+  const g=ac.createGain(); g.gain.value=.35; src.connect(bp); bp.connect(g); g.connect(master); src.start();
+  const b2=noiseBuf(.04,t=>(Math.random()*2-1)*Math.pow(1-t,3)); const s2=ac.createBufferSource(); s2.buffer=b2;
+  const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=700; const g2=ac.createGain(); g2.gain.value=.6;
+  s2.connect(lp); lp.connect(g2); g2.connect(master); s2.start(ac.currentTime+.24);
 }
 function sndShutter(){
   if(!audio()) return;
