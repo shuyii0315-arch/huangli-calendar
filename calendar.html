@@ -9398,7 +9398,7 @@ function frame(t){
       const target=Math.max(-32,Math.min(32,-vx*.035));      // 往右甩，纸往左飘
       f.rv += ((target-f.r)*70 - f.rv*11)*dt; f.r += f.rv*dt;
       f.flip += ((Math.max(-18,Math.min(18,vx*.02)))-f.flip)*Math.min(1,dt*6);
-      f.el.style.transform=`translate(${f.x}px, ${f.y}px) rotate(${f.r}deg) scale(${f.sc}) perspective(1200px) rotateY(${f.flip}deg)`;
+      f.el.style.transform=`translate(${f.x+(f.offx||0)}px, ${f.y+(f.offy||0)}px) rotate(${f.r}deg) scale(${f.sc}) perspective(1200px) rotateY(${f.flip}deg)`;
       continue;
     }
     f.t+=dt;
@@ -9569,7 +9569,7 @@ function dragEnd(e){
   if(G2.fly){ G2.el.onpointermove=G2.el.onpointerup=G2.el.onpointercancel=null; }
   if(G2.fly){ const [vx,vy]=velocity(G2.hist); if(e.clientX!=null && tryPin(G2.fly, vx, vy)) return; }
   showGhost(null);
-  if(G2.fly){ const [vx,vy]=velocity(G2.hist); const f=G2.fly; f.held=false; f.vx=Math.max(-1400,Math.min(1400,vx)); f.vy=Math.max(-600,Math.min(1400,vy)); f.w=f.rv/60; f.t=0; return; }
+  if(G2.fly){ const [vx,vy]=velocity(G2.hist); const f=G2.fly; f.held=false; f.x+=f.offx||0; f.y+=f.offy||0; f.offx=f.offy=0; f.vx=Math.max(-1400,Math.min(1400,vx)); f.vy=Math.max(-600,Math.min(1400,vy)); f.w=f.rv/60; f.t=0; return; }
   if(!G2.moved){ if(G2.cs0){ peek.el=G2.el; peek.s=peek.tgt=G2.cs0; peek.side=G2.cside; } nudge(G2.el); return; }
   const el=G2.el; // 没撕断：弹回去
   if(G2.curl){ const cs0=parseFloat((el.style.clipPath.match(/- ([\d.]+)px/)||[])[1]||0), t0=performance.now();
@@ -9595,7 +9595,7 @@ function saveWall(){ document.getElementById('wallClr').hidden=!pinned.length; w
 function topMid(f, s=f.sc||1, r=f.r){
   const w=f.el.offsetWidth, o=f.el.style.transformOrigin.split(' ').map(parseFloat), a=r*Math.PI/180;
   const dx=(w/2-o[0])*s, dy=(0-o[1])*s;
-  return {x:f.x+o[0]+dx*Math.cos(a)-dy*Math.sin(a), y:f.y+o[1]+dx*Math.sin(a)+dy*Math.cos(a)};
+  return {x:f.x+(f.offx||0)+o[0]+dx*Math.cos(a)-dy*Math.sin(a), y:f.y+(f.offy||0)+o[1]+dx*Math.sin(a)+dy*Math.cos(a)};
 }
 function canPin(x,y,w,h){
   const r=stack.getBoundingClientRect(), bar=document.getElementById('bar').getBoundingClientRect(), dk=document.getElementById('dock').getBoundingClientRect(), m=10;
@@ -9604,9 +9604,10 @@ function canPin(x,y,w,h){
   return !hit(r) && !hit(bar) && !hit(dk);
 }
 // 拿着撕下的页时：离开日历、到了空墙上，纸就缩成墙上那么大，磁铁的虚影出现在它要吸住的地方
-function pinSpot(f){
-  const w=f.el.offsetWidth*PIN_S, h=f.el.offsetHeight*PIN_S, p=topMid(f, PIN_S, 0);
-  const x=Math.max(w/2+10, Math.min(innerWidth-w/2-10, p.x)), y=Math.max(14, Math.min(innerHeight-h-10, p.y));
+function pinSpot(f){ // 小页挂在手下面：手在页的中间偏上
+  const w=f.el.offsetWidth*PIN_S, h=f.el.offsetHeight*PIN_S, o=f.el.style.transformOrigin.split(' ').map(parseFloat);
+  const hx=f.tx+o[0], hy=f.ty+o[1];
+  const x=Math.max(w/2+10, Math.min(innerWidth-w/2-10, hx)), y=Math.max(14, Math.min(innerHeight-h-10, hy-h*.42));
   return canPin(x,y,w,h) ? {x,y} : null;
 }
 const ghost=document.getElementById('ghost');
@@ -9616,6 +9617,9 @@ function updatePinPreview(f, dt, speed){
   f.slow = speed<520 ? (f.slow||0)+dt : 0;
   const sp = f.slow>.12 ? pinSpot(f) : (f.scT===PIN_S && speed<900 ? pinSpot(f) : null);
   f.spot=sp; f.scT=sp?PIN_S:1; showGhost(sp);
+  let ox=0, oy=0;
+  if(sp){ const save={x:f.x,y:f.y,ox:f.offx,oy:f.offy}; f.offx=f.offy=0; const q=topMid(f, PIN_S, f.r); ox=sp.x-q.x; oy=sp.y-q.y; f.offx=save.ox; f.offy=save.oy; }
+  const k=Math.min(1,dt*14); f.offx=(f.offx||0)+(ox-(f.offx||0))*k; f.offy=(f.offy||0)+(oy-(f.offy||0))*k;
 }
 function showGhost(sp){
   ghost.classList.toggle('on', !!sp); ghostTip.classList.toggle('on', !!sp);
