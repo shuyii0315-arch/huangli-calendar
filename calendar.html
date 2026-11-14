@@ -9295,8 +9295,9 @@ function drawCables(){
   let s='';
   // 两根钢丝：天花板固定点 → 挂钩
   const hookTop=hookEls.map(h=>{const b=h.getBoundingClientRect();return {x:b.left+b.width/2,y:b.top+1}});
+  wires=[];
   hookTop.forEach((p,i)=>{
-    const fx=p.x - swingX;
+    const fx=p.x - swingX; wires.push([fx,-10,p.x,p.y]);
     s+=`<line x1="${fx}" y1="-10" x2="${p.x}" y2="${p.y}" stroke="#7b8085" stroke-width="1.1"/><line x1="${fx+.6}" y1="-10" x2="${p.x+.6}" y2="${p.y}" stroke="rgba(255,255,255,.6)" stroke-width=".5"/>`;
   });
   // 铅笔的珠链
@@ -9317,7 +9318,7 @@ function penTop(){ // 铅笔顶端小环的位置
   const a=anchor(), cl=chainLen();
   return {x:a.x+Math.sin(pen.a)*cl, y:a.y+Math.cos(pen.a)*cl};
 }
-let swingX=0;
+let swingX=0, wires=[], barDrag=null;
 // 拿起挂着的笔：先从挂着的样子被拉到手上（约 0.4 秒），之后笔尖跟着指针
 function clampTip(x,y,t){ // 链子有长度：笔离挂钩最远到纸的范围附近，再远就停在链子绷直的地方
   const a=anchor(), L=penLen(), max=W*1.05;
@@ -9339,7 +9340,10 @@ function frame(t){
   stepTweens(t);
   const dt=Math.min(.033,(t-last)/1000); last=t;
   // 两根平行钢丝：整体像秋千一样平移摆
-  sw.v += (-9.81/ (wireL/400) * Math.sin(sw.a) - 1.6*sw.v)*dt; sw.a += sw.v*dt;
+  if(barDrag){ // 手拽着横梁：角度跟手走，记下角速度，松手时带着惯性荡
+    const tgt=Math.max(-.55,Math.min(.55,Math.asin(Math.max(-1,Math.min(1,barDrag.dx/(wireL*.35))))));
+    const na=sw.a+(tgt-sw.a)*Math.min(1,dt*18); sw.v=(na-sw.a)/Math.max(dt,.001); sw.a=na;
+  } else { sw.v += (-9.81/ (wireL/400) * Math.sin(sw.a) - 1.1*sw.v)*dt; sw.a += sw.v*dt; }
   sw.yv += (-180*sw.y - 14*sw.yv)*dt; sw.y += sw.yv*dt;
   const L=wireL;
   const ox=Math.sin(sw.a)*L*.35, oy=(1-Math.cos(sw.a))*L*.35 + sw.y;
@@ -9840,6 +9844,36 @@ addEventListener('keydown',e=>{
 });
 
 addEventListener('pointerdown',()=>{audio(); if(ac&&ac.state==='suspended') ac.resume();},{capture:true});
+// 拖横梁：按住左右拖，日历跟着摆；松手按单摆荡回来
+bar.style.cursor='grab';
+bar.addEventListener('pointerdown',e=>{
+  if(pen.held) return; e.preventDefault(); e.stopPropagation();
+  bar.setPointerCapture(e.pointerId); bar.style.cursor='grabbing';
+  barDrag={x0:e.clientX, ox:Math.sin(sw.a)*wireL*.35, dx:Math.sin(sw.a)*wireL*.35};
+  const mv=ev=>{ barDrag.dx=barDrag.ox+(ev.clientX-barDrag.x0); };
+  const up=()=>{ bar.removeEventListener('pointermove',mv); bar.removeEventListener('pointerup',up); bar.removeEventListener('pointercancel',up); barDrag=null; bar.style.cursor='grab'; };
+  bar.addEventListener('pointermove',mv); bar.addEventListener('pointerup',up); bar.addEventListener('pointercancel',up);
+});
+// 拨钢丝：鼠标划过钢丝，像手指拨了一下
+let lastPM=null;
+addEventListener('pointermove',e=>{
+  const now=performance.now(), prev=lastPM; lastPM={x:e.clientX,y:e.clientY,t:now};
+  if(!prev||barDrag||grab||pen.held||e.buttons) return;
+  const vx=(e.clientX-prev.x)/Math.max(8,now-prev.t)*1000;
+  for(const [x1,y1,x2,y2] of wires){
+    if(e.clientY<y1||e.clientY>y2) continue;
+    const wx=x1+(x2-x1)*((e.clientY-y1)/(y2-y1));
+    if((prev.x-wx)*(e.clientX-wx)<=0 && Math.abs(vx)>40){ // 这一帧从钢丝的一侧划到了另一侧
+      sw.v+=Math.max(-.35,Math.min(.35,vx*.00022)); sndPluck(Math.min(1,Math.abs(vx)/1500)); break;
+    }
+  }
+});
+function sndPluck(k){ // 很轻的一声钢丝响
+  if(!audio()) return;
+  const o=ac.createOscillator(), g=ac.createGain(); o.type='triangle'; o.frequency.value=520+Math.random()*60;
+  g.gain.setValueAtTime(.05*k+.015,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.35);
+  o.connect(g); g.connect(master); o.start(); o.stop(ac.currentTime+.4);
+}
 // 展示页的标签可以让日历演示对应的动作
 addEventListener('message',e=>{
   const d=e.data; if(typeof d!=='string'||!d.startsWith('hl:')) return;
