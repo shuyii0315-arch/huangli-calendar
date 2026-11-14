@@ -8,8 +8,20 @@ import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
 
 const DEMO_BASE = "https://shuyii0315-arch.github.io/huangli-calendar/pages/"
 const DEMO_LINK = "https://shuyii0315-arch.github.io/huangli-calendar/"
-const DEMO = [1, 2, 3, 4, 5, 6, 7].map((i) => ({ image: { src: DEMO_BASE + "p" + i + ".jpg", alt: "Huangli page" }, link: DEMO_LINK }))
-const RATIOS = { Calendar: 1.32, "3:4": 4 / 3, "4:5": 1.25, "2:3": 1.5, "1:1": 1 }
+const ALMANAC = [1, 2, 3, 4, 5, 6, 7].map((i) => ({ image: { src: DEMO_BASE + "p" + i + ".jpg", alt: "Huangli almanac page" }, link: DEMO_LINK }))
+// Utagawa Hiroshige, One Hundred Famous Views of Edo (1856–58). Public domain, via The Metropolitan Museum of Art (CC0).
+const MET = "https://images.metmuseum.org/CRDImages/as/web-large/"
+const UKIYOE = [
+    ["DP130157", 53681, "Plum Garden at Kamata"],
+    ["DP130156", 55433, "Sudden Shower over Shin-Ōhashi Bridge and Atake"],
+    ["DP121524", 37093, "Fireworks at Ryōgoku Bridge"],
+    ["DP121535", 55095, "Moon-Viewing Location"],
+    ["DP121529", 37096, "Maples at Mama"],
+    ["DP121668", 55733, "Jūmantsubo Plain at Fukagawa Susaki"],
+    ["DP121552", 56689, "Kinryūsan Temple at Asakusa"],
+].map(([f, id, t]) => ({ image: { src: MET + f + ".jpg", alt: "Utagawa Hiroshige, " + t }, link: "https://www.metmuseum.org/art/collection/search/" + id }))
+const SAMPLES = { Almanac: ALMANAC, "Ukiyo-e": UKIYOE }
+const RATIOS = { Auto: 0, "3:4": 4 / 3, "4:5": 1.25, "2:3": 1.5, "1:1": 1 }
 const PIN_S = 0.4
 const SVGNS = "http://www.w3.org/2000/svg"
 
@@ -60,10 +72,10 @@ const CSS = `
  * @framerIntrinsicHeight 720
  */
 export default function TearOffPages(props) {
-    const { pages, ratio = "Calendar", wall = "#F7F7F7", pin = true, sound = true, style } = props
+    const { pages, sample = "Almanac", ratio = "Auto", wall = "#F7F7F7", pin = true, sound = true, style } = props
     const own = (pages || []).filter((p) => p && p.image && p.image.src)
-    const list = own.length ? own : DEMO
-    const R = RATIOS[ratio] || 1.32
+    const list = own.length ? own : SAMPLES[sample] || ALMANAC
+    const R = RATIOS[ratio] || (own.length ? 4 / 3 : sample === "Ukiyo-e" ? 1.5 : 1.32)
     const isStatic = useIsStaticRenderer()
     const root = React.useRef(null)
     const cfg = React.useRef({})
@@ -117,9 +129,13 @@ addPropertyControls(TearOffPages, {
                 link: { type: ControlType.Link, title: "Link" },
             },
         },
-        description: "Leave empty to show the sample almanac pages.",
+        description: "Add your own images. Empty shows a sample set.",
     },
-    ratio: { type: ControlType.Enum, title: "Page", options: Object.keys(RATIOS), defaultValue: "Calendar" },
+    sample: {
+        type: ControlType.Enum, title: "Sample", options: Object.keys(SAMPLES), defaultValue: "Almanac",
+        hidden: (p) => (p.pages || []).some((x) => x && x.image && x.image.src),
+    },
+    ratio: { type: ControlType.Enum, title: "Page", options: Object.keys(RATIOS), defaultValue: "Auto" },
     wall: { type: ControlType.Color, title: "Wall", defaultValue: "#F7F7F7" },
     pin: { type: ControlType.Boolean, title: "Pin to wall", defaultValue: true, enabledTitle: "On", disabledTitle: "Off" },
     sound: { type: ControlType.Boolean, title: "Sound", defaultValue: true, enabledTitle: "On", disabledTitle: "Off" },
